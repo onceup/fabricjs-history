@@ -1,4 +1,5 @@
 import './App.css';
+import Fabricjs from './components/Fabricjs';
 
 function App() {
   return (
