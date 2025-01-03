@@ -19,6 +19,12 @@ export class HistoryCanvas extends Canvas {
   constructor(el?: string | HTMLCanvasElement, options = {}) {
     super(el, options);
     this._setupHistoryHandling();
+
+    requestAnimationFrame(() => {
+      const initialState = this._historyNext();
+      this.historyUndo = [initialState];
+      this.historyRedo = [];
+    });
   }
 
   private _historyNext(): string {
@@ -26,11 +32,6 @@ export class HistoryCanvas extends Canvas {
   }
 
   private _setupHistoryHandling() {
-    const initialState = this._historyNext();
-    this.historyUndo = [initialState];
-    this.historyRedo = [];
-
-    // Setup event listeners for history tracking
     this.on('object:added', (e) => this._historySaveAction(e));
     this.on('object:modified', (e) => this._historySaveAction(e));
     this.on('object:removed', (e) => this._historySaveAction(e));
@@ -43,6 +44,7 @@ export class HistoryCanvas extends Canvas {
     if (!e || (e.target && !e.target.excludeFromExport)) {
       const json = this._historyNext();
       this.historyUndo.push(json);
+      this.historyRedo = [];
 
       this.fire('history:append', { json });
       this.fire('history:modified', {
@@ -53,14 +55,14 @@ export class HistoryCanvas extends Canvas {
   }
 
   public async undo() {
-    // this.isHistoryProcessing = true;
-    const json = this._historyNext();
-    const lastState = this.historyUndo.pop();
-    const prevState = this.historyUndo.pop();
-
-    if (json) {
-      this.historyRedo.push(json);
-      await this._loadHistory(prevState, 'history:undo');
+    this.isHistoryProcessing = true;
+    const history = this.historyUndo.pop();
+    if (history) {
+      this.historyRedo.push(history);
+      await this._loadHistory(
+        this.historyUndo[this.historyUndo.length - 1],
+        'history:undo'
+      );
     } else {
       this.isHistoryProcessing = false;
     }
@@ -96,7 +98,7 @@ export class HistoryCanvas extends Canvas {
   }
 
   public canUndo(): boolean {
-    return this.historyUndo.length > 0;
+    return this.historyUndo.length > 1;
   }
 
   public canRedo(): boolean {
