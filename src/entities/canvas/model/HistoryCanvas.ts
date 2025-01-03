@@ -105,13 +105,6 @@ export class HistoryCanvas extends Canvas {
     return this.historyRedo.length > 0;
   }
 
-  public clear() {
-    super.clear();
-    // this.historyUndo = [];
-    // this.historyRedo = [];
-    // this._historySaveAction();
-  }
-
   public onHistory() {
     this.isHistoryProcessing = false;
     this._historySaveAction();
