@@ -56,7 +56,7 @@ function Fabricjs() {
 
   return (
     <div className='flex flex-col h-full'>
-      <div className='flex justify-between items-center'>
+      <div className='flex flex-wrap gap-4 justify-between items-center'>
         <DrawingControls
           lineWidth={lineWidth}
           opacity={opacity}

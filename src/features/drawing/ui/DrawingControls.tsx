@@ -14,8 +14,8 @@ export const DrawingControls = ({
   onOpacityChange,
 }: DrawingControlsProps) => {
   return (
-    <div className='flex gap-2 mb-2'>
-      <div className='flex items-center gap-2'>
+    <div className='flex flex-wrap gap-4 mb-2'>
+      <div className='flex items-center gap-2 min-w-[300px]'>
         Line Width:
         <Slider
           min={1}
@@ -27,7 +27,7 @@ export const DrawingControls = ({
         <span>{lineWidth}px</span>
       </div>
 
-      <div className='flex items-center gap-2'>
+      <div className='flex items-center gap-2 min-w-[300px]'>
         Opacity:
         <Slider
           min={0}
