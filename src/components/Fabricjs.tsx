@@ -14,10 +14,8 @@ function Fabricjs() {
 
   const handleCanvasReady = useCallback((fabricCanvas: HistoryCanvas) => {
     canvas.current = fabricCanvas;
-    // canvas.current.on('object:added', handleObjectAdded);
     setupDrawingBrush(fabricCanvas, lineWidth, opacity);
 
-    // Update undo/redo states whenever canvas changes
     const updateHistoryState = () => {
       if (canvas.current) {
         setCanUndo(canvas.current.canUndo());
