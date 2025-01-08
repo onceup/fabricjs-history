@@ -14,8 +14,10 @@ export const setupCanvasResizing = (
 ) => {
   const setCurrentDimensions = () => {
     if (!canvas) return;
-    canvas.setHeight(containerElement?.clientHeight || 0);
-    canvas.setWidth(containerElement?.clientWidth || 0);
+    canvas.setDimensions({
+      height: containerElement?.clientHeight || 0,
+      width: containerElement?.clientWidth || 0,
+    });
     canvas.renderAll();
   };
 

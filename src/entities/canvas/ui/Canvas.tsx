@@ -3,11 +3,11 @@ import { HistoryCanvas } from '../model/HistoryCanvas';
 import { initCanvas, setupCanvasResizing } from '../model/init';
 
 interface CanvasProps {
+  canvasEl: React.RefObject<HTMLCanvasElement>;
   onCanvasReady: (canvas: HistoryCanvas) => void;
 }
 
-export const Canvas = ({ onCanvasReady }: CanvasProps) => {
-  const canvasEl = useRef<HTMLCanvasElement>(null);
+export const Canvas = ({ onCanvasReady, canvasEl }: CanvasProps) => {
   const canvasElParent = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

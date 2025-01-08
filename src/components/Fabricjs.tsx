@@ -4,9 +4,11 @@ import { DrawingControls } from '@/features/drawing/ui/DrawingControls';
 import { HistoryControls } from '@/features/history/ui/HistoryControls';
 import { setupDrawingBrush } from '@/features/drawing/model/handlers';
 import { HistoryCanvas } from '@/entities/canvas/model/HistoryCanvas';
+import { SaveCanvasButton } from '@/features/canvas/ui/SaveCanvasButton';
 
 function Fabricjs() {
   const canvas = useRef<HistoryCanvas | null>(null);
+  const canvasEl = useRef<HTMLCanvasElement>(null);
   const [lineWidth, setLineWidth] = useState(1);
   const [opacity, setOpacity] = useState(1);
   const [canUndo, setCanUndo] = useState(false);
@@ -55,7 +57,7 @@ function Fabricjs() {
   );
 
   return (
-    <div className='flex flex-col h-full'>
+    <div className='flex flex-col h-full min-w-96'>
       <div className='flex flex-wrap gap-4 justify-between items-center'>
         <DrawingControls
           lineWidth={lineWidth}
@@ -70,7 +72,8 @@ function Fabricjs() {
           canRedo={canRedo}
         />
       </div>
-      <Canvas onCanvasReady={handleCanvasReady} />
+      <Canvas canvasEl={canvasEl} onCanvasReady={handleCanvasReady} />
+      <SaveCanvasButton canvas={canvasEl.current} />
     </div>
   );
 }

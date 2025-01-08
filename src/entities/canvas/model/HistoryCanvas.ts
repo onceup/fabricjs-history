@@ -107,9 +107,6 @@ export class HistoryCanvas extends Canvas {
 
   public clear() {
     super.clear();
-    // this.historyUndo = [];
-    // this.historyRedo = [];
-    // this._historySaveAction();
   }
 
   public onHistory() {
