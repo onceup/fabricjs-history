@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, memo } from 'react';
 import { HistoryCanvas } from '../model/HistoryCanvas';
 import { initCanvas, setupCanvasResizing } from '../model/init';
 
@@ -7,7 +7,7 @@ interface CanvasProps {
   onCanvasReady: (canvas: HistoryCanvas) => void;
 }
 
-export const Canvas = ({ onCanvasReady, canvasEl }: CanvasProps) => {
+export const Canvas = memo(({ onCanvasReady, canvasEl }: CanvasProps) => {
   const canvasElParent = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,4 +31,4 @@ export const Canvas = ({ onCanvasReady, canvasEl }: CanvasProps) => {
       <canvas ref={canvasEl} />
     </div>
   );
-};
+});

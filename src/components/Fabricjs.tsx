@@ -5,8 +5,9 @@ import { HistoryControls } from '@/features/history/ui/HistoryControls';
 import { setupDrawingBrush } from '@/features/drawing/model/handlers';
 import { HistoryCanvas } from '@/entities/canvas/model/HistoryCanvas';
 import { SaveCanvasButton } from '@/features/canvas/ui/SaveCanvasButton';
+import { memo } from 'react';
 
-function Fabricjs() {
+const Fabricjs = memo(function Fabricjs() {
   const canvas = useRef<HistoryCanvas | null>(null);
   const canvasEl = useRef<HTMLCanvasElement>(null);
   const [lineWidth, setLineWidth] = useState(1);
@@ -76,6 +77,6 @@ function Fabricjs() {
       <SaveCanvasButton canvas={canvasEl.current} />
     </div>
   );
-}
+});
 
 export default Fabricjs;
