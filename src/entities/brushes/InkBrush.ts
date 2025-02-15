@@ -8,6 +8,7 @@ import {
   Group,
   Point,
   Shadow,
+  Path,
 } from 'fabric';
 import getStroke from 'perfect-freehand';
 
@@ -144,30 +145,35 @@ export class InkBrush extends BaseBrush {
     const originalRenderOnAddRemove = this.canvas.renderOnAddRemove;
     this.canvas.renderOnAddRemove = false;
 
-    const circles: Circle[] = [];
+    // Create the stroke path using perfect-freehand
+    const stroke = getStroke(this.points, options);
+    const pathData = getSvgPathFromStroke(stroke);
 
-    for (let i = 0; i < this.points.length; i++) {
-      const point = this.points[i],
-        circle = new Circle({
-          radius: point.radius,
-          left: point.x,
-          top: point.y,
-          originX: 'center',
-          originY: 'center',
-          fill: point.fill,
-        });
+    // Create a fabric.Path object from the SVG path data
+    const path = new Path(pathData, {
+      fill: this.color,
+      stroke: null,
+      strokeWidth: 0,
+      strokeLineCap: this.strokeLineCap,
+      strokeMiterLimit: this.strokeMiterLimit,
+      strokeLineJoin: this.strokeLineJoin,
+      strokeDashArray: this.strokeDashArray,
+    });
 
-      this.shadow && (circle.shadow = new Shadow(this.shadow));
-
-      circles.push(circle);
+    // Apply shadow if it exists
+    if (this.shadow) {
+      path.shadow = new Shadow(this.shadow);
     }
-    const group = new Group(circles, { canvas: this.canvas });
 
-    this.canvas.fire('before:path:created', { path: group });
-    this.canvas.add(group);
-    this.canvas.fire('path:created', { path: group });
-
+    // Clear the drawing context
     this.canvas.clearContext(this.canvas.contextTop);
+
+    // Fire events and add the path to canvas
+    this.canvas.fire('before:path:created', { path });
+    this.canvas.add(path);
+    this.canvas.fire('path:created', { path });
+
+    // Reset and cleanup
     this._resetShadow();
     this.canvas.renderOnAddRemove = originalRenderOnAddRemove;
     this.canvas.requestRenderAll();
