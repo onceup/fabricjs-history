@@ -1,26 +1,26 @@
-import { TCanvasOptions } from 'node_modules/fabric/dist/src/canvas/CanvasOptions';
-import { HistoryCanvas } from './HistoryCanvas';
+import { TCanvasOptions } from "node_modules/fabric/dist/src/canvas/CanvasOptions";
+import { GestureCanvas } from "./GestureCanvas";
 
 export const initCanvas = (
-  canvasElement: HTMLCanvasElement | undefined,
-  options: TCanvasOptions
+	canvasElement: HTMLCanvasElement | undefined,
+	options: TCanvasOptions,
 ) => {
-  return new HistoryCanvas(canvasElement, options);
+	return new GestureCanvas(canvasElement, options);
 };
 
 export const setupCanvasResizing = (
-  canvas: HistoryCanvas,
-  containerElement: HTMLElement | null
+	canvas: GestureCanvas,
+	containerElement: HTMLElement | null,
 ) => {
-  const setCurrentDimensions = () => {
-    if (!canvas) return;
-    canvas.setDimensions({
-      height: containerElement?.clientHeight || 0,
-      width: containerElement?.clientWidth || 0,
-    });
-    canvas.renderAll();
-  };
+	const setCurrentDimensions = () => {
+		if (!canvas) return;
+		canvas.setDimensions({
+			height: containerElement?.clientHeight || 0,
+			width: containerElement?.clientWidth || 0,
+		});
+		canvas.renderAll();
+	};
 
-  setCurrentDimensions();
-  return setCurrentDimensions;
+	setCurrentDimensions();
+	return setCurrentDimensions;
 };

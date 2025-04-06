@@ -9,9 +9,9 @@ export default defineConfig({
 		port: 5173,
 	},
 	plugins: [
-		MillionLint.vite({
-			enabled: true,
-		}),
+		// MillionLint.vite({
+		// 	enabled: true,
+		// }),
 		react(),
 	],
 	resolve: {
