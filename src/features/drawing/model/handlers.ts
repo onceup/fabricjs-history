@@ -7,8 +7,8 @@ export const setupDrawingBrush = (
 	lineWidth: number,
 	opacity: number,
 ) => {
-	// canvas.freeDrawingBrush = new CircleBrush(canvas);
-	canvas.freeDrawingBrush = new InkBrush(canvas);
+	canvas.freeDrawingBrush = new PencilBrush(canvas);
+	// canvas.freeDrawingBrush = new InkBrush(canvas);
 	console.log(lineWidth);
 	canvas.freeDrawingBrush.width = lineWidth;
 	canvas.freeDrawingBrush.color = `rgba(0,0,0,${opacity})`;

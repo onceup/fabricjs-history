@@ -1,5 +1,5 @@
 import { useEffect, useRef, memo } from 'react';
-import { HistoryCanvas } from '../model/HistoryCanvas';
+import type { HistoryCanvas } from '../model/HistoryCanvas';
 import { initCanvas, setupCanvasResizing } from '../model/init';
 
 interface CanvasProps {
@@ -10,6 +10,7 @@ interface CanvasProps {
 export const Canvas = memo(({ onCanvasReady, canvasEl }: CanvasProps) => {
   const canvasElParent = useRef<HTMLDivElement>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const canvas = initCanvas(canvasEl.current ?? undefined, {
       isDrawingMode: true,

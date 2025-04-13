@@ -25,7 +25,8 @@ function App() {
         </button> */}
       </div>
 
-      {showGestureDemo ? <GestureDemo /> : <Fabricjs />}
+      {/* {showGestureDemo ? <GestureDemo /> : <Fabricjs />} */}
+      <Fabricjs />
     </div>
   );
 }

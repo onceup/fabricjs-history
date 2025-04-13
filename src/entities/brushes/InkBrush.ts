@@ -43,24 +43,15 @@ const options = {
 	},
 };
 
-/**
- * Returns random number between 2 specified ones.
- * @param {Number} min lower limit
- * @param {Number} max upper limit
- * @return {Number} random value (between min and max)
- */
-export const getRandomInt = (min: number, max: number): number =>
-	Math.floor(Math.random() * (max - min + 1)) + min;
-
 export class InkBrush extends BaseBrush {
 	/**
 	 * Width of a brush
 	 * @type Number
 	 * @default
 	 */
-	width = 10;
+	width = 1;
 
-	declare points: CircleBrushPoint[];
+	declare points: Point[];
 
 	constructor(canvas: Canvas) {
 		super(canvas);
@@ -89,10 +80,10 @@ export class InkBrush extends BaseBrush {
 		ctx.restore();
 	}
 
-	dot(ctx: CanvasRenderingContext2D, point: CircleBrushPoint) {
-		ctx.fillStyle = point.fill;
+	dot(ctx: CanvasRenderingContext2D, point: Point) {
+		ctx.fillStyle = this.color;
 		ctx.beginPath();
-		ctx.arc(point.x, point.y, point.radius, 0, Math.PI * 2, false);
+		ctx.arc(point.x, point.y, this.width / 2, 0, Math.PI * 2, false);
 		ctx.closePath();
 		ctx.fill();
 	}
@@ -180,20 +171,14 @@ export class InkBrush extends BaseBrush {
 		this.canvas.requestRenderAll();
 	}
 
-	/**
-	 * @param {Object} pointer
-	 * @return {Point} Just added pointer point
-	 */
-	addPoint({ x, y }: Point) {
-		const pointerPoint: CircleBrushPoint = {
-			x,
-			y,
-			radius: getRandomInt(Math.max(0, this.width - 20), this.width + 20) / 2,
-			fill: new Color(this.color).setAlpha(getRandomInt(0, 100) / 100).toRgba(),
-		};
-
-		this.points.push(pointerPoint);
-
-		return pointerPoint;
+	addPoint(point: Point) {
+		if (
+			this.points.length > 1 &&
+			point.eq(this.points[this.points.length - 1])
+		) {
+			return false;
+		}
+		this.points.push(point);
+		return true;
 	}
 }
