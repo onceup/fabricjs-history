@@ -87,33 +87,33 @@ export class GestureCanvas extends HistoryCanvas {
 					this.requestRenderAll();
 				}
 			},
-			onRotate: (angleDifference: number) => {
-				const activeObject = this.getActiveObject();
-				if (!activeObject || !this.isUsingGesture) return;
+			// onRotate: (angleDifference: number) => {
+			// 	const activeObject = this.getActiveObject();
+			// 	if (!activeObject || !this.isUsingGesture) return;
 
-				const rotationThreshold = 0.8;
-				this.isRotating = Math.abs(angleDifference) > rotationThreshold;
+			// 	const rotationThreshold = 0.8;
+			// 	this.isRotating = Math.abs(angleDifference) > rotationThreshold;
 
-				if (this.isRotating) {
-					const currentAngle = activeObject.angle || 0;
-					activeObject.rotate((currentAngle + angleDifference) % 360);
-					activeObject.setCoords();
-					this.requestRenderAll();
-				}
-			},
-			onDrag: (
-				dx: number,
-				dy: number,
-				previousDx: number,
-				previousDy: number,
-			) => {
-				// Don't pan if we're manipulating a selected object
-				if (this.getActiveObject() && this.isUsingGesture) return;
+			// 	if (this.isRotating) {
+			// 		const currentAngle = activeObject.angle || 0;
+			// 		activeObject.rotate((currentAngle + angleDifference) % 360);
+			// 		activeObject.setCoords();
+			// 		this.requestRenderAll();
+			// 	}
+			// },
+			// onDrag: (
+			// 	dx: number,
+			// 	dy: number,
+			// 	previousDx: number,
+			// 	previousDy: number,
+			// ) => {
+			// 	// Don't pan if we're manipulating a selected object
+			// 	if (this.getActiveObject() && this.isUsingGesture) return;
 
-				const delta = new Point(2 * (dx - previousDx), 2 * (dy - previousDy));
-				this.handlePan(delta);
-				this.requestRenderAll();
-			},
+			// 	const delta = new Point(2 * (dx - previousDx), 2 * (dy - previousDy));
+			// 	this.handlePan(delta);
+			// 	this.requestRenderAll();
+			// },
 			onGestureEnd: (fingers: number) => {
 				if (fingers === 0) {
 					// Re-enable object caching when gesture ends
