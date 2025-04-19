@@ -55,56 +55,54 @@ export function enableMobileGestures(
 			if (Math.abs(scale - previousScale) < 0.005) return;
 
 			// Check if we're working with a selected object or the canvas
-			const activeObject = canvas.getActiveObject();
-			if (activeObject && !isRotating) {
-				// Scale the selected object
-				const scaleDiff = scale - previousScale;
-				activeObject._setOriginToCenter();
-				activeObject.scaleX = activeObject.scaleX
-					? activeObject.scaleX * (1 + scaleDiff)
-					: 1;
-				activeObject.scaleY = activeObject.scaleY
-					? activeObject.scaleY * (1 + scaleDiff)
-					: 1;
-				activeObject._resetOrigin();
-				activeObject.setCoords();
-				canvas.requestRenderAll();
-			} else {
-				// Zoom the canvas
-				handleZoom(scale, center.x, center.y, canvas, previousScale);
-				canvas.requestRenderAll();
-			}
+			// const activeObject = canvas.getActiveObject();
+			// if (activeObject && !isRotating) {
+			// 	// Scale the selected object
+			// 	const scaleDiff = scale - previousScale;
+			// 	activeObject._setOriginToCenter();
+			// 	activeObject.scaleX = activeObject.scaleX
+			// 		? activeObject.scaleX * (1 + scaleDiff)
+			// 		: 1;
+			// 	activeObject.scaleY = activeObject.scaleY
+			// 		? activeObject.scaleY * (1 + scaleDiff)
+			// 		: 1;
+			// 	activeObject._resetOrigin();
+			// 	activeObject.setCoords();
+			// 	canvas.requestRenderAll();
+			// } else {
+			// Zoom the canvas
+			handleZoom(scale, center.x, center.y, canvas, previousScale);
+			canvas.requestRenderAll();
+			// }
 		},
 		onRotate: (angleDifference: number, center: Point) => {
-			const activeObject = canvas.getActiveObject();
-			if (!activeObject || !isUsingGesture) return;
-
-			const rotationThreshold = 0.8;
-			isRotating = Math.abs(angleDifference) > rotationThreshold;
-
-			if (isRotating) {
-				const currentAngle = activeObject.angle || 0;
-				activeObject.rotate((currentAngle + angleDifference) % 360);
-				activeObject.setCoords();
-				canvas.requestRenderAll();
-			}
+			// const activeObject = canvas.getActiveObject();
+			// if (!activeObject || !isUsingGesture) return;
+			// const rotationThreshold = 0.8;
+			// isRotating = Math.abs(angleDifference) > rotationThreshold;
+			// if (isRotating) {
+			// 	const currentAngle = activeObject.angle || 0;
+			// 	activeObject.rotate((currentAngle + angleDifference) % 360);
+			// 	activeObject.setCoords();
+			// 	canvas.requestRenderAll();
+			// }
 		},
-		onDrag: (
-			dx: number,
-			dy: number,
-			previousDx: number,
-			previousDy: number,
-		) => {
-			// Don't pan if we're manipulating a selected object
-			if (canvas.getActiveObject() && isUsingGesture) return;
+		// onDrag: (
+		// 	dx: number,
+		// 	dy: number,
+		// 	previousDx: number,
+		// 	previousDy: number,
+		// ) => {
+		// 	// Don't pan if we're manipulating a selected object
+		// 	if (canvas.getActiveObject() && isUsingGesture) return;
 
-			const delta = {
-				x: 2 * (dx - previousDx),
-				y: 2 * (dy - previousDy),
-			};
-			handlePan(delta, canvas);
-			canvas.requestRenderAll();
-		},
+		// 	const delta = {
+		// 		x: 2 * (dx - previousDx),
+		// 		y: 2 * (dy - previousDy),
+		// 	};
+		// 	handlePan(delta, canvas);
+		// 	canvas.requestRenderAll();
+		// },
 		onGestureEnd: (fingers: number) => {
 			if (fingers === 0) {
 				// Re-enable object caching when gesture ends

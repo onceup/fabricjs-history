@@ -1,12 +1,4 @@
-import {
-	BaseBrush,
-	type Canvas,
-	type CircleBrushPoint,
-	Color,
-	type Point,
-	Shadow,
-	Path,
-} from "fabric";
+import { BaseBrush, type Canvas, type Point, Shadow, Path } from "fabric";
 import getStroke from "perfect-freehand";
 
 export function getSvgPathFromStroke(stroke: number[][]) {
@@ -44,12 +36,8 @@ const options = {
 };
 
 export class InkBrush extends BaseBrush {
-	/**
-	 * Width of a brush
-	 * @type Number
-	 * @default
-	 */
 	width = 1;
+	opacity = 1;
 
 	declare points: Point[];
 
@@ -59,7 +47,7 @@ export class InkBrush extends BaseBrush {
 	}
 
 	_getOptions() {
-		return { ...options, size: this.width };
+		return { ...options, size: this.width, opacity: this.opacity };
 	}
 
 	/**
@@ -80,19 +68,10 @@ export class InkBrush extends BaseBrush {
 		ctx.restore();
 	}
 
-	dot(ctx: CanvasRenderingContext2D, point: Point) {
-		ctx.fillStyle = this.color;
-		ctx.beginPath();
-		ctx.arc(point.x, point.y, this.width / 2, 0, Math.PI * 2, false);
-		ctx.closePath();
-		ctx.fill();
-	}
-
 	/**
 	 * Invoked on mouse down
 	 */
 	onMouseDown(pointer: Point) {
-		console.log("onMouseDown");
 		this.points = [];
 		this.canvas.clearContext(this.canvas.contextTop);
 		this._setShadow();
@@ -104,12 +83,21 @@ export class InkBrush extends BaseBrush {
 	 * @private
 	 */
 	_render() {
+		// Render the current path using perfect-freehand based on existing points
 		const ctx = this.canvas.contextTop;
 		const points = this.points;
-		this._saveAndTransform(ctx);
-		for (let i = 0; i < points.length; i++) {
-			this.dot(ctx, points[i]);
+
+		// Don't render if there are no points
+		if (!points || points.length === 0) {
+			return;
 		}
+
+		const stroke = getStroke(points, this._getOptions());
+		const pathData = getSvgPathFromStroke(stroke);
+		const myPath = new Path2D(pathData);
+		ctx.globalAlpha = this.opacity;
+		this._saveAndTransform(ctx);
+		ctx?.fill(myPath);
 		ctx.restore();
 	}
 

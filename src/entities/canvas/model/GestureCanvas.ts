@@ -3,7 +3,7 @@ import { gestureDetector } from "../../../utils/gestureDetector";
 import { Point } from "fabric";
 
 const PAN_MARGIN = 20; // Margins when checking canvas bounds
-const MIN_ZOOM = 0.8; // Minimum zoom level for mobile
+const MIN_ZOOM = 0.1; // Minimum zoom level for mobile
 const MAX_ZOOM = 10; // Maximum zoom level
 const ZOOM_DAMPENING = 0.2; // Dampen the zoom effect for a smoother experience
 
@@ -63,6 +63,7 @@ export class GestureCanvas extends HistoryCanvas {
 				this.isUsingGesture = true;
 			},
 			onZoom: (scale: number, previousScale: number, center: Point) => {
+				console.log("onZoom", this.wasDrawingMode, this.isDrawingMode);
 				// Skip tiny scale changes for better performance
 				if (Math.abs(scale - previousScale) < 0.005) return;
 
@@ -101,20 +102,22 @@ export class GestureCanvas extends HistoryCanvas {
 			// 		this.requestRenderAll();
 			// 	}
 			// },
-			// onDrag: (
-			// 	dx: number,
-			// 	dy: number,
-			// 	previousDx: number,
-			// 	previousDy: number,
-			// ) => {
-			// 	// Don't pan if we're manipulating a selected object
-			// 	if (this.getActiveObject() && this.isUsingGesture) return;
+			// Dragging over the canvas
+			onDrag: (
+				dx: number,
+				dy: number,
+				previousDx: number,
+				previousDy: number,
+			) => {
+				// Don't pan if we're manipulating a selected object
+				if (this.getActiveObject() && this.isUsingGesture) return;
 
-			// 	const delta = new Point(2 * (dx - previousDx), 2 * (dy - previousDy));
-			// 	this.handlePan(delta);
-			// 	this.requestRenderAll();
-			// },
+				const delta = new Point(2 * (dx - previousDx), 2 * (dy - previousDy));
+				this.handlePan(delta);
+				this.requestRenderAll();
+			},
 			onGestureEnd: (fingers: number) => {
+				console.log("onGestureEnd", fingers);
 				if (fingers === 0) {
 					// Re-enable object caching when gesture ends
 					for (const obj of this.getObjects()) {
@@ -148,7 +151,11 @@ export class GestureCanvas extends HistoryCanvas {
 	 * Helper to clean up drawing artifacts when canceling a drawing
 	 */
 	private cancelCurrentDrawing(): void {
-		if (!this.isDrawingMode) return;
+		console.log("cancelCurrentDrawing", this.isDrawingMode);
+		// if (!this.isDrawingMode) return;
+		setTimeout(() => {
+			console.log("cancelCurrentDrawing timeout");
+		}, 10);
 
 		// Use setTimeout to prevent race conditions with fabric's event handling
 		setTimeout(() => {
@@ -156,19 +163,20 @@ export class GestureCanvas extends HistoryCanvas {
 			this.clearContext(this.contextTop);
 
 			// Remove the last object if it appears to be an incomplete drawing
-			const objects = this.getObjects();
-			if (objects.length > 0) {
-				const lastObject = objects[objects.length - 1];
-				// Type assertion for path property access
-				const pathObj = lastObject as { type: string; path?: Array<unknown> };
-				if (
-					pathObj.type === "path" &&
-					// Check if it's likely an incomplete path (few points)
-					(pathObj.path?.length || 0) < 3
-				) {
-					this.remove(lastObject);
-				}
-			}
+			const objects = this.getObjects().pop();
+			console.log("objects", objects);
+			// if (objects.length > 0) {
+			// 	const lastObject = objects[objects.length - 1];
+			// 	// Type assertion for path property access
+			// 	const pathObj = lastObject as { type: string; path?: Array<unknown> };
+			// 	if (
+			// 		pathObj.type === "path" &&
+			// 		// Check if it's likely an incomplete path (few points)
+			// 		(pathObj.path?.length || 0) < 3
+			// 	) {
+			// 		this.remove(lastObject);
+			// 	}
+			// }
 
 			this.requestRenderAll();
 		}, 10);
