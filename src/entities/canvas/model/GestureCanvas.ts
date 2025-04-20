@@ -11,6 +11,12 @@ export class GestureCanvas extends HistoryCanvas {
 	private panStartPoint: Point | null = null;
 	private gestureDetectorInstance: { destroy: () => void } | null = null;
 	public selection = false;
+	private panBoundaries: {
+		left: number;
+		top: number;
+		right: number;
+		bottom: number;
+	} | null = null;
 
 	constructor(el?: string | HTMLCanvasElement, options = {}) {
 		super(el, options);
@@ -149,10 +155,6 @@ export class GestureCanvas extends HistoryCanvas {
 	}
 
 	/**
-	 * Ensures the canvas stays within reasonable bounds during pan operations
-	 */
-
-	/**
 	 * Handles zoom operations on the canvas
 	 * @param scale Scale factor
 	 * @param centerX X coordinate to zoom towards
@@ -185,6 +187,74 @@ export class GestureCanvas extends HistoryCanvas {
 	 */
 	private handlePan(delta: Point): void {
 		this.relativePan(delta);
+
+		// Apply boundaries if set
+		if (this.panBoundaries) {
+			this.enforcePanBoundaries();
+		}
+	}
+
+	/**
+	 * Sets boundaries for canvas panning to keep the specified area in view
+	 * @param left Left boundary coordinate
+	 * @param top Top boundary coordinate
+	 * @param width Width of the bounded area
+	 * @param height Height of the bounded area
+	 */
+	public setPanBoundaries(
+		left: number,
+		top: number,
+		width: number,
+		height: number,
+	): void {
+		this.panBoundaries = {
+			left: left,
+			top: top,
+			right: left + width,
+			bottom: top + height,
+		};
+	}
+
+	/**
+	 * Enforces the pan boundaries to keep the bounded area visible
+	 */
+	private enforcePanBoundaries(): void {
+		if (!this.panBoundaries) return;
+
+		const zoom = this.getZoom();
+		const vpt = this.viewportTransform;
+		if (!vpt) return;
+
+		// Calculate current viewport edges
+		const currentLeft = -vpt[4] / zoom;
+		const currentTop = -vpt[5] / zoom;
+		const currentRight = currentLeft + (this.width || 0) / zoom;
+		const currentBottom = currentTop + (this.height || 0) / zoom;
+
+		// Calculate adjustments needed
+		let adjustX = 0;
+		let adjustY = 0;
+
+		// Adjust horizontally if needed
+		if (currentLeft > this.panBoundaries.left) {
+			adjustX = this.panBoundaries.left - currentLeft;
+		} else if (currentRight < this.panBoundaries.right) {
+			adjustX = this.panBoundaries.right - currentRight;
+		}
+
+		// Adjust vertically if needed
+		if (currentTop > this.panBoundaries.top) {
+			adjustY = this.panBoundaries.top - currentTop;
+		} else if (currentBottom < this.panBoundaries.bottom) {
+			adjustY = this.panBoundaries.bottom - currentBottom;
+		}
+
+		// Apply adjustments if needed
+		if (adjustX !== 0 || adjustY !== 0) {
+			vpt[4] -= adjustX * zoom;
+			vpt[5] -= adjustY * zoom;
+			this.requestRenderAll();
+		}
 	}
 
 	/**

@@ -52,17 +52,15 @@ export const setupCanvasResizing = (
 
 		canvas.clipPath = drawingAreaClipRect;
 
-		canvas.renderAll();
-
-		// Set boundaries for panning
-		canvas.setPanBoundaries({
-			clientWidth,
-			clientHeight,
+		// Set pan boundaries to keep the background rect visible
+		canvas.setPanBoundaries(
 			drawingAreaX,
 			drawingAreaY,
 			drawingAreaWidth,
 			drawingAreaHeight,
-		});
+		);
+
+		canvas.renderAll();
 	};
 
 	setCurrentDimensions();
