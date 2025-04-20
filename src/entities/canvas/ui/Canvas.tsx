@@ -28,7 +28,7 @@ export const Canvas = memo(({ onCanvasReady, canvasEl }: CanvasProps) => {
   }, []);
 
   return (
-    <div ref={canvasElParent} className='min-h-96 min-w-96 border-2'>
+    <div ref={canvasElParent} className='min-h-[1024px] min-w-96 border-2 bg-slate-300'>
       <canvas ref={canvasEl} />
     </div>
   );
