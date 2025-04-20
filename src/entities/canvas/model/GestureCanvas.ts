@@ -1,22 +1,35 @@
 import { HistoryCanvas } from "./HistoryCanvas";
 import { gestureDetector } from "../../../utils/gestureDetector";
-import { Point } from "fabric";
+import { Point, Group } from "fabric";
+import type { FabricObject } from "fabric";
 
-const PAN_MARGIN = 20; // Margins when checking canvas bounds
-const MIN_ZOOM = 0.1; // Minimum zoom level for mobile
-const MAX_ZOOM = 10; // Maximum zoom level
+// const PAN_MARGIN = 20; // Margins when checking canvas bounds - Removed as unused
+const MIN_ZOOM = 0.5; // Minimum zoom level for mobile
+const MAX_ZOOM = 2; // Maximum zoom level
 const ZOOM_DAMPENING = 0.2; // Dampen the zoom effect for a smoother experience
 
 export class GestureCanvas extends HistoryCanvas {
-	private isRotating = false;
 	private isUsingGesture = false;
 	private panStartPoint: Point | null = null;
 	private gestureDetectorInstance: { destroy: () => void } | null = null;
 	private wasDrawingMode = false;
+	public selection = false;
 
 	constructor(el?: string | HTMLCanvasElement, options = {}) {
 		super(el, options);
 		this.setupGestures();
+		this.selection = false; // Disable Fabric.js native selection (doesn't work???)
+
+		// Set existing objects to non-selectable because this.selection = false doesn't work
+		for (const obj of this.getObjects()) {
+			obj.selectable = false;
+		}
+		// Ensure newly added objects are also non-selectable
+		this.on("object:added", (e) => {
+			if (e.target) {
+				e.target.selectable = false;
+			}
+		});
 	}
 
 	/**
@@ -63,30 +76,44 @@ export class GestureCanvas extends HistoryCanvas {
 				this.isUsingGesture = true;
 			},
 			onZoom: (scale: number, previousScale: number, center: Point) => {
-				console.log("onZoom", this.wasDrawingMode, this.isDrawingMode);
+				console.log(
+					"onZoom",
+					this.wasDrawingMode,
+					this.isDrawingMode,
+					this.selection,
+				);
 				// Skip tiny scale changes for better performance
-				if (Math.abs(scale - previousScale) < 0.005) return;
+				// if (Math.abs(scale - previousScale) < 0.005) return;
 
-				// Check if we're working with a selected object or the canvas
+				// Check if an object is somehow active despite canvas.selection being false
 				const activeObject = this.getActiveObject();
-				if (activeObject && !this.isRotating) {
-					// Scale the selected object
-					const scaleDiff = scale - previousScale;
-
-					// Use Fabric.js methods to scale properly
-					const prevScaleX = activeObject.scaleX || 1;
-					const prevScaleY = activeObject.scaleY || 1;
-
-					// Use the appropriate function to avoid linter error
-					activeObject.scale(prevScaleX * (1 + scaleDiff));
-					activeObject.scaleY = prevScaleY * (1 + scaleDiff);
-
-					this.requestRenderAll();
-				} else {
-					// Zoom the canvas
-					this.handleZoom(scale, center.x, center.y, previousScale);
-					this.requestRenderAll();
+				if (activeObject) {
+					console.log(
+						"WARNING: An object is active during zoom gesture:",
+						activeObject,
+					);
 				}
+
+				// // Check if we're working with a selected object or the canvas
+				// const activeObject = this.getActiveObject();
+				// if (activeObject && !this.isRotating) {
+				// 	// Scale the selected object
+				// 	const scaleDiff = scale - previousScale;
+
+				// 	// Use Fabric.js methods to scale properly
+				// 	const prevScaleX = activeObject.scaleX || 1;
+				// 	const prevScaleY = activeObject.scaleY || 1;
+
+				// 	// Use the appropriate function to avoid linter error
+				// 	activeObject.scale(prevScaleX * (1 + scaleDiff));
+				// 	activeObject.scaleY = prevScaleY * (1 + scaleDiff);
+
+				// 	this.requestRenderAll();
+				// } else {
+				// Zoom the canvas
+				this.handleZoom(scale, center.x, center.y, previousScale);
+				this.requestRenderAll();
+				// }
 			},
 			// onRotate: (angleDifference: number) => {
 			// 	const activeObject = this.getActiveObject();
@@ -138,9 +165,9 @@ export class GestureCanvas extends HistoryCanvas {
 
 					// Restore drawing mode if it was previously enabled
 					setTimeout(() => {
-						if (this.wasDrawingMode) {
-							this.isDrawingMode = true;
-						}
+						// if (this.wasDrawingMode) {
+						this.isDrawingMode = true;
+						// }
 					}, 150);
 				}
 			},
@@ -151,11 +178,8 @@ export class GestureCanvas extends HistoryCanvas {
 	 * Helper to clean up drawing artifacts when canceling a drawing
 	 */
 	private cancelCurrentDrawing(): void {
-		console.log("cancelCurrentDrawing", this.isDrawingMode);
 		// if (!this.isDrawingMode) return;
-		setTimeout(() => {
-			console.log("cancelCurrentDrawing timeout");
-		}, 10);
+		setTimeout(() => {}, 10);
 
 		// Use setTimeout to prevent race conditions with fabric's event handling
 		setTimeout(() => {
@@ -164,7 +188,6 @@ export class GestureCanvas extends HistoryCanvas {
 
 			// Remove the last object if it appears to be an incomplete drawing
 			const objects = this.getObjects().pop();
-			console.log("objects", objects);
 			// if (objects.length > 0) {
 			// 	const lastObject = objects[objects.length - 1];
 			// 	// Type assertion for path property access
@@ -229,12 +252,10 @@ export class GestureCanvas extends HistoryCanvas {
 	 * @param objects Array of Fabric.js objects
 	 * @param enabled Whether to enable caching
 	 */
-	private setCacheForObjects(
-		objects: Record<string, any>[],
-		enabled: boolean,
-	): void {
+	private setCacheForObjects(objects: FabricObject[], enabled: boolean): void {
 		for (const obj of objects) {
-			if (obj.type === "group" && obj.getObjects) {
+			// Check if it's a group and recursively call
+			if (obj.type === "group" && obj instanceof Group) {
 				this.setCacheForObjects(obj.getObjects(), enabled);
 			}
 			obj.objectCaching = enabled;
@@ -245,28 +266,24 @@ export class GestureCanvas extends HistoryCanvas {
 	 * Ensures the canvas stays within reasonable bounds during pan operations
 	 */
 	private checkCanvasBounds(): void {
-		const vpt = this.viewportTransform;
-		if (!vpt) return;
-
-		const canvasWidth = this.getWidth();
-		const canvasHeight = this.getHeight();
-		const zoomFactor = this.getZoom();
-
-		// Check left boundary
-		if (vpt[4] >= PAN_MARGIN) {
-			vpt[4] = PAN_MARGIN;
-		} else if (vpt[4] < canvasWidth - canvasWidth * zoomFactor - PAN_MARGIN) {
-			vpt[4] = canvasWidth - canvasWidth * zoomFactor - PAN_MARGIN;
-		}
-
-		// Check top boundary
-		if (vpt[5] >= PAN_MARGIN) {
-			vpt[5] = PAN_MARGIN;
-		} else if (vpt[5] < canvasHeight - canvasHeight * zoomFactor - PAN_MARGIN) {
-			vpt[5] = canvasHeight - canvasHeight * zoomFactor - PAN_MARGIN;
-		}
-
-		this.setViewportTransform(vpt);
+		// const vpt = this.viewportTransform;
+		// if (!vpt) return;
+		// const canvasWidth = this.getWidth();
+		// const canvasHeight = this.getHeight();
+		// const zoomFactor = this.getZoom();
+		// // Check left boundary
+		// if (vpt[4] >= PAN_MARGIN) {
+		// 	vpt[4] = PAN_MARGIN;
+		// } else if (vpt[4] < canvasWidth - canvasWidth * zoomFactor - PAN_MARGIN) {
+		// 	vpt[4] = canvasWidth - canvasWidth * zoomFactor - PAN_MARGIN;
+		// }
+		// // Check top boundary
+		// if (vpt[5] >= PAN_MARGIN) {
+		// 	vpt[5] = PAN_MARGIN;
+		// } else if (vpt[5] < canvasHeight - canvasHeight * zoomFactor - PAN_MARGIN) {
+		// 	vpt[5] = canvasHeight - canvasHeight * zoomFactor - PAN_MARGIN;
+		// }
+		// this.setViewportTransform(vpt);
 	}
 
 	/**

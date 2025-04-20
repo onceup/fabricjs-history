@@ -63,7 +63,6 @@ export class InkBrush extends BaseBrush {
 		const pathData = getSvgPathFromStroke(stroke);
 		const myPath = new Path2D(pathData);
 		this._saveAndTransform(ctx);
-		// this.dot(ctx, point);
 		ctx?.fill(myPath);
 		ctx.restore();
 	}
@@ -79,11 +78,10 @@ export class InkBrush extends BaseBrush {
 	}
 
 	/**
-	 * Render the full state of the brush
+	 * Render the current path using perfect-freehand based on existing points, used with opacity
 	 * @private
 	 */
 	_render() {
-		// Render the current path using perfect-freehand based on existing points
 		const ctx = this.canvas.contextTop;
 		const points = this.points;
 
