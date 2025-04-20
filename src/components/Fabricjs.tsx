@@ -5,7 +5,6 @@ import { HistoryControls } from '@/features/history/ui/HistoryControls';
 import { setupDrawingBrush } from '@/features/drawing/model/handlers';
 import type { HistoryCanvas } from '@/entities/canvas/model/HistoryCanvas';
 import { SaveCanvasButton } from '@/features/canvas/ui/SaveCanvasButton';
-import { useCanvasZoom } from '@/features/canvas-zoom';
 import { memo } from 'react';
 
 const Fabricjs = memo(function Fabricjs() {
@@ -15,8 +14,6 @@ const Fabricjs = memo(function Fabricjs() {
   const [opacity, setOpacity] = useState(1);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
-
-  useCanvasZoom(canvas);
 
   const handleCanvasReady = useCallback((fabricCanvas: HistoryCanvas) => {
     canvas.current = fabricCanvas;

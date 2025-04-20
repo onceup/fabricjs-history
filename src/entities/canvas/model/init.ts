@@ -1,4 +1,4 @@
-import { TCanvasOptions } from "node_modules/fabric/dist/src/canvas/CanvasOptions";
+import type { TCanvasOptions } from "node_modules/fabric/dist/src/canvas/CanvasOptions";
 import { GestureCanvas } from "./GestureCanvas";
 
 export const initCanvas = (

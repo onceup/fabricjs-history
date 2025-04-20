@@ -10,36 +10,12 @@ interface GestureDetectorOptions {
 		previousDy: number,
 		center: Point,
 	) => void;
-	onRotate?: (angleDifference: number, center: Point) => void;
 	onGestureEnd?: (fingers: number) => void;
 }
 
 /**
- * Calculate angle between two points in degrees
- */
-function calculateAngle(
-	x1: number,
-	y1: number,
-	x2: number,
-	y2: number,
-): number {
-	const dx = x2 - x1;
-	const dy = y2 - y1;
-	return (Math.atan2(dy, dx) * 180) / Math.PI;
-}
-
-/**
- * Normalize angle to be between -180 and 180 degrees
- */
-function normalizeAngle(angle: number): number {
-	let newAngle = angle;
-	while (newAngle <= -180) newAngle += 360;
-	while (newAngle > 180) newAngle -= 360;
-	return newAngle;
-}
-
-/**
- * Gesture detector for handling multi-touch gestures
+ * Gesture detector for handling multi-touch gestures on mobile devices
+ * and mouse gestures on desktop devices.
  * @param el HTML element to attach gesture detection to
  * @param options Configuration options for gesture detection
  * @returns Object with destroy method to clean up event listeners
@@ -51,9 +27,6 @@ export function gestureDetector(
 	let initialDistance = 0;
 	let initialX = 0;
 	let initialY = 0;
-
-	let initialAngle = 0;
-	let previousAngle = 0;
 
 	let previousScale = 1;
 	let previousDx = 0;
@@ -72,15 +45,6 @@ export function gestureDetector(
 			previousScale = 1;
 			previousDx = 0;
 			previousDy = 0;
-
-			initialAngle = calculateAngle(
-				e.touches[0].clientX,
-				e.touches[0].clientY,
-				e.touches[1].clientX,
-				e.touches[1].clientY,
-			);
-
-			previousAngle = initialAngle;
 
 			initialDistance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 
@@ -108,18 +72,6 @@ export function gestureDetector(
 			const currentDistance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 			const scale = currentDistance / initialDistance;
 
-			const currentAngle = calculateAngle(
-				e.touches[0].clientX,
-				e.touches[0].clientY,
-				e.touches[1].clientX,
-				e.touches[1].clientY,
-			);
-			const angleDifference = normalizeAngle(currentAngle - previousAngle);
-
-			if (options.onRotate) {
-				options.onRotate(angleDifference, center);
-			}
-
 			if (options.onZoom) {
 				options.onZoom(scale, previousScale, center);
 			}
@@ -129,7 +81,6 @@ export function gestureDetector(
 			}
 
 			// Update previous values
-			previousAngle = currentAngle;
 			previousScale = scale;
 			previousDx = dx;
 			previousDy = dy;

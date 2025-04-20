@@ -1,12 +1,12 @@
-import { Canvas, FabricObject, CanvasEvents } from "fabric";
+import { Canvas, type FabricObject, type CanvasEvents } from "fabric";
 
 declare module "fabric" {
 	interface CanvasEvents {
 		"history:append": { json: string };
-		"history:undo": void;
-		"history:redo": void;
+		"history:undo": undefined;
+		"history:redo": undefined;
 		"history:modified": { canUndo: boolean; canRedo: boolean };
-		"history:loaded": void;
+		"history:loaded": undefined;
 	}
 }
 
