@@ -1,6 +1,6 @@
 import { HistoryCanvas } from "./HistoryCanvas";
 import { gestureDetector } from "../../../utils/gestureDetector";
-import { Point } from "fabric";
+import { Point, TPointerEvent } from "fabric";
 
 const MIN_ZOOM = 0.5; // Minimum zoom level for mobile
 const MAX_ZOOM = 2; // Maximum zoom level

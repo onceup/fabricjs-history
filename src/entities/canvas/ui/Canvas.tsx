@@ -14,6 +14,7 @@ export const Canvas = memo(({ onCanvasReady, canvasEl }: CanvasProps) => {
   useEffect(() => {
     const canvas = initCanvas(canvasEl.current ?? undefined, {
       isDrawingMode: true,
+      selection: false,
     });
 
     const resizeHandler = setupCanvasResizing(canvas, canvasElParent.current);
