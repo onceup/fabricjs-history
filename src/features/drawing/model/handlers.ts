@@ -3,6 +3,7 @@ import type { HistoryCanvas } from "@/entities/canvas/model/HistoryCanvas";
 import { useDrawingStore } from "./drawingStore";
 import { renderDrawPreview } from "./useDraw";
 import { InkBrush } from "@/entities/brushes/InkBrush";
+import { FabricObject } from "fabric";
 
 export const setupDrawingBrush = (
 	canvas: HistoryCanvas,
@@ -19,6 +20,22 @@ export const setupDrawingBrush = (
 	brush.opacity = opacity;
 	// brush.thinning = 0.618;
 	// brush.streamline = 0.5;
+
+	// Make sure image smoothing is disabled
+	canvas.imageSmoothingEnabled = false;
+
+	// Add event listener to disable object caching for all new objects
+	const disableCachingHandler = (e: { target: FabricObject }) => {
+		if (e.target) {
+			e.target.objectCaching = false;
+		}
+	};
+
+	// Remove existing handler if it exists
+	canvas.off("object:added", disableCachingHandler);
+
+	// Add the handler
+	canvas.on("object:added", disableCachingHandler);
 
 	// Enable free drawing mode
 	canvas.isDrawingMode = true;

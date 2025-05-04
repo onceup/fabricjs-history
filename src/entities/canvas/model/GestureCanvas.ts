@@ -275,4 +275,21 @@ export class GestureCanvas extends HistoryCanvas {
 		}
 		return super.dispose();
 	}
+
+	/**
+	 * Override renderAll to ensure image smoothing is always disabled
+	 */
+	renderAll() {
+		// Disable image smoothing on both contexts
+		if (this.contextContainer) {
+			this.contextContainer.imageSmoothingEnabled = false;
+		}
+		if (this.contextTop) {
+			this.contextTop.imageSmoothingEnabled = false;
+		}
+
+		// Call parent's renderAll
+		super.renderAll();
+		return this;
+	}
 }

@@ -38,6 +38,7 @@ const options = {
 export class DirectInkBrush extends BaseBrush {
 	width = 1;
 	opacity = 1;
+	noScaleCache = true; // Prevent cache regeneration during scaling
 
 	declare points: Point[];
 	private lastPoint: Point | null = null;
@@ -45,14 +46,59 @@ export class DirectInkBrush extends BaseBrush {
 	constructor(canvas: Canvas) {
 		super(canvas);
 		this.points = [];
+
+		// Ensure image smoothing is disabled in both contexts
+		if (
+			canvas.contextContainer &&
+			canvas.contextContainer.imageSmoothingEnabled !== false
+		) {
+			canvas.contextContainer.imageSmoothingEnabled = false;
+		}
+		if (
+			canvas.contextTop &&
+			canvas.contextTop.imageSmoothingEnabled !== false
+		) {
+			canvas.contextTop.imageSmoothingEnabled = false;
+		}
+	}
+
+	/**
+	 * Force using the same rendering approach
+	 */
+	needsFullRender() {
+		return true;
 	}
 
 	/**
 	 * Required implementation of abstract _render method
 	 */
 	_render() {
-		// Not needed for direct drawing on lower canvas
-		// since we're drawing immediately in onMouseMove
+		const ctx = this.canvas.contextTop;
+		const points = this.points;
+
+		// Don't render if there are no points
+		if (!points || points.length === 0) {
+			return;
+		}
+
+		// Ensure image smoothing is disabled
+		if (ctx.imageSmoothingEnabled !== false) {
+			ctx.imageSmoothingEnabled = false;
+		}
+
+		// Draw the path
+		ctx.globalAlpha = this.opacity;
+		this._saveAndTransform(ctx);
+
+		ctx.beginPath();
+		ctx.moveTo(points[0].x, points[0].y);
+
+		for (let i = 1; i < points.length; i++) {
+			ctx.lineTo(points[i].x, points[i].y);
+		}
+
+		ctx.stroke();
+		ctx.restore();
 	}
 
 	/**
@@ -62,22 +108,13 @@ export class DirectInkBrush extends BaseBrush {
 		this.points = [];
 		this.lastPoint = pointer;
 
-		// Start drawing directly on lower canvas
-		const ctx = this.canvas.contextContainer;
+		// Set shadow
 		this._setShadow();
 
-		ctx.save();
-		ctx.globalAlpha = this.opacity;
-		ctx.lineWidth = this.width;
-		ctx.strokeStyle = this.color;
-		ctx.lineCap = "round";
-		ctx.lineJoin = "round";
-
-		ctx.beginPath();
-		ctx.moveTo(pointer.x, pointer.y);
-
+		// Add point and render
 		this.addPoint(pointer);
-		this.canvas.requestRenderAll();
+		this.canvas.clearContext(this.canvas.contextTop);
+		this._render();
 	}
 
 	/**
@@ -89,37 +126,44 @@ export class DirectInkBrush extends BaseBrush {
 			return;
 		}
 
-		if (!this.lastPoint) return;
-
-		// Draw directly on lower canvas
-		const ctx = this.canvas.contextContainer;
-
-		ctx.beginPath();
-		ctx.moveTo(this.lastPoint.x, this.lastPoint.y);
-		ctx.lineTo(pointer.x, pointer.y);
-		ctx.stroke();
-
+		// Track last point for line drawing
 		this.lastPoint = pointer;
-		this.addPoint(pointer);
 
-		// We need to render all since we're modifying the actual canvas
-		this.canvas.requestRenderAll();
+		// Add point and render
+		this.addPoint(pointer);
+		this.canvas.clearContext(this.canvas.contextTop);
+		this._render();
 	}
 
 	/**
 	 * Invoked on mouse up
 	 */
 	onMouseUp() {
-		// We're drawing directly on the lower canvas, so there's no need
-		// to create a new path object - the drawing is already permanent
-
 		// Reset state
 		this.lastPoint = null;
 		this._resetShadow();
 
-		// Create a path for undo/redo history if needed
+		// Get path data from points
 		const pathData = this.createPathDataFromPoints();
-		const path = new Path(pathData, {
+
+		// Create a custom class to match our rendering
+		class NonSmoothPath extends Path {
+			_render(ctx: CanvasRenderingContext2D) {
+				// Force disable smoothing before render
+				if (ctx.imageSmoothingEnabled !== false) {
+					ctx.imageSmoothingEnabled = false;
+				}
+
+				// Use consistent rendering approach
+				ctx.globalAlpha = this.opacity || 1;
+
+				// Call parent render
+				super._render(ctx);
+			}
+		}
+
+		// Create our custom path
+		const path = new NonSmoothPath(pathData, {
 			fill: null,
 			stroke: this.color,
 			strokeWidth: this.width,
@@ -128,10 +172,21 @@ export class DirectInkBrush extends BaseBrush {
 			strokeMiterLimit: this.strokeMiterLimit,
 			strokeLineJoin: this.strokeLineJoin,
 			strokeDashArray: this.strokeDashArray,
+			// Disable all caching to maintain visual consistency
+			objectCaching: false,
+			noScaleCache: true,
+			perPixelTargetFind: true,
 		});
 
-		// Add the path as an object for selection and other interactions
-		// (This is optional - remove if you want to keep the drawing as pure pixels)
+		// Clear the drawing context
+		this.canvas.clearContext(this.canvas.contextTop);
+
+		// Ensure image smoothing is disabled on both contexts
+		this.canvas.contextContainer.imageSmoothingEnabled = false;
+		this.canvas.contextTop.imageSmoothingEnabled = false;
+		this.canvas.imageSmoothingEnabled = false;
+
+		// Add the path to canvas
 		this.canvas.fire("before:path:created", { path });
 		this.canvas.add(path);
 		this.canvas.fire("path:created", { path });
@@ -171,12 +226,27 @@ export class DirectInkBrush extends BaseBrush {
 export class InkBrush extends BaseBrush {
 	width = 1;
 	opacity = 1;
+	noScaleCache = true; // Prevent cache regeneration during scaling
 
 	declare points: Point[];
 
 	constructor(canvas: Canvas) {
 		super(canvas);
 		this.points = [];
+
+		// Ensure image smoothing is disabled in the canvas contexts
+		if (
+			canvas.contextContainer &&
+			canvas.contextContainer.imageSmoothingEnabled !== false
+		) {
+			canvas.contextContainer.imageSmoothingEnabled = false;
+		}
+		if (
+			canvas.contextTop &&
+			canvas.contextTop.imageSmoothingEnabled !== false
+		) {
+			canvas.contextTop.imageSmoothingEnabled = false;
+		}
 	}
 
 	_getOptions() {
@@ -184,17 +254,50 @@ export class InkBrush extends BaseBrush {
 	}
 
 	/**
+	 * Force the brush to always use the _render method instead of drawDot for consistency
+	 */
+	needsFullRender() {
+		// Always return true to ensure the same rendering path is used
+		return true;
+	}
+
+	/**
 	 * Invoked inside on mouse down and mouse move
 	 * @param {Point} pointer
 	 */
 	drawDot(pointer: Point) {
+		// Add the point to the path
 		this.addPoint(pointer);
+
+		// Instead of drawing a dot, use the full render method for consistency
+		this.canvas.clearContext(this.canvas.contextTop);
+		this._render();
+	}
+
+	/**
+	 * Render the current path using perfect-freehand based on existing points, used with opacity
+	 * @private
+	 */
+	_render() {
 		const ctx = this.canvas.contextTop;
 		const points = this.points;
+
+		// Don't render if there are no points
+		if (!points || points.length === 0) {
+			return;
+		}
+
+		// Make sure imageSmoothingEnabled is disabled
+		if (ctx.imageSmoothingEnabled !== false) {
+			ctx.imageSmoothingEnabled = false;
+		}
 
 		const stroke = getStroke(points, this._getOptions());
 		const pathData = getSvgPathFromStroke(stroke);
 		const myPath = new Path2D(pathData);
+
+		// Use the same fill approach for both drawing methods
+		ctx.globalAlpha = this.opacity;
 		this._saveAndTransform(ctx);
 		ctx?.fill(myPath);
 		ctx.restore();
@@ -211,28 +314,6 @@ export class InkBrush extends BaseBrush {
 	}
 
 	/**
-	 * Render the current path using perfect-freehand based on existing points, used with opacity
-	 * @private
-	 */
-	_render() {
-		const ctx = this.canvas.contextTop;
-		const points = this.points;
-
-		// Don't render if there are no points
-		if (!points || points.length === 0) {
-			return;
-		}
-
-		const stroke = getStroke(points, this._getOptions());
-		const pathData = getSvgPathFromStroke(stroke);
-		const myPath = new Path2D(pathData);
-		ctx.globalAlpha = this.opacity;
-		this._saveAndTransform(ctx);
-		ctx?.fill(myPath);
-		ctx.restore();
-	}
-
-	/**
 	 * Invoked on mouse move
 	 * @param {Point} pointer
 	 */
@@ -240,13 +321,11 @@ export class InkBrush extends BaseBrush {
 		if (this.limitedToCanvasSize === true && this._isOutSideCanvas(pointer)) {
 			return;
 		}
-		if (this.needsFullRender()) {
-			this.canvas.clearContext(this.canvas.contextTop);
-			this.addPoint(pointer);
-			this._render();
-		} else {
-			this.drawDot(pointer);
-		}
+
+		// Always add the point and render the full path
+		this.addPoint(pointer);
+		this.canvas.clearContext(this.canvas.contextTop);
+		this._render();
 	}
 
 	/**
@@ -256,19 +335,41 @@ export class InkBrush extends BaseBrush {
 		const originalRenderOnAddRemove = this.canvas.renderOnAddRemove;
 		this.canvas.renderOnAddRemove = false;
 
-		// Create the stroke path using perfect-freehand
+		// Create the stroke path using perfect-freehand with the same options used during drawing
 		const stroke = getStroke(this.points, this._getOptions());
 		const pathData = getSvgPathFromStroke(stroke);
 
-		// Create a fabric.Path object from the SVG path data
-		const path = new Path(pathData, {
+		// Create a custom path class that will use the exact same rendering as our _render method
+		class NonSmoothPath extends Path {
+			_render(ctx: CanvasRenderingContext2D) {
+				// Force disable smoothing before render
+				if (ctx.imageSmoothingEnabled !== false) {
+					ctx.imageSmoothingEnabled = false;
+				}
+
+				// Use the same rendering approach as the brush's _render method
+				ctx.globalAlpha = this.opacity || 1;
+
+				// Call the parent's render method to maintain consistency
+				super._render(ctx);
+			}
+		}
+
+		// Create our custom path using the same options
+		const path = new NonSmoothPath(pathData, {
+			// Use fill instead of stroke to match the brush rendering during drawing
 			fill: this.color,
 			stroke: null,
 			strokeWidth: 0,
+			// opacity: this.opacity,
 			strokeLineCap: this.strokeLineCap,
 			strokeMiterLimit: this.strokeMiterLimit,
 			strokeLineJoin: this.strokeLineJoin,
 			strokeDashArray: this.strokeDashArray,
+			// Disable all caching to maintain visual consistency
+			objectCaching: false,
+			noScaleCache: true,
+			perPixelTargetFind: true,
 		});
 
 		// Apply shadow if it exists
@@ -276,8 +377,16 @@ export class InkBrush extends BaseBrush {
 			path.shadow = new Shadow(this.shadow);
 		}
 
+		// Mark the path as dirty to force a re-render
+		path.dirty = true;
+
 		// Clear the drawing context
 		this.canvas.clearContext(this.canvas.contextTop);
+
+		// Ensure image smoothing is disabled on both contexts
+		// this.canvas.contextContainer.imageSmoothingEnabled = false;
+		// this.canvas.contextTop.imageSmoothingEnabled = false;
+		// this.canvas.imageSmoothingEnabled = false;
 
 		// Fire events and add the path to canvas
 		this.canvas.fire("before:path:created", { path });

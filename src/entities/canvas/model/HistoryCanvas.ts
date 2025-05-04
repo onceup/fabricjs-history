@@ -93,7 +93,10 @@ export class HistoryCanvas extends Canvas {
 	}
 
 	private async _loadHistory(history: string, event: keyof CanvasEvents) {
+		const wasImageSmoothingEnabled = this.imageSmoothingEnabled;
 		await this.loadFromJSON(JSON.parse(history));
+		// Restore image smoothing setting
+		this.imageSmoothingEnabled = wasImageSmoothingEnabled;
 		this.renderAll();
 		this.fire(event);
 		this.isHistoryProcessing = false;
